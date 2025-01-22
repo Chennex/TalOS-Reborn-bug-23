@@ -29,7 +29,6 @@ export async function processMessage() {
     const message = activeDiscordClient.messageQueue.shift();
     if (!message) return;
     if (message.content.startsWith('.') && !message.content.startsWith('...')) return isProcessing = false;
-
     let roomPipeline = activePipelines.find(pipeline => pipeline.channelId === message.channel.id);
     if (!roomPipeline) {
       const newPipeline = RoomPipeline.getRoomByChannelId(message.channel.id);
@@ -39,21 +38,17 @@ export async function processMessage() {
       roomPipeline = newPipeline;
       activePipelines.push(newPipeline);
     }
-
     if (!activeDiscordClient?.isLoggedIntoDiscord()) return isProcessing = false;
-    
     const typingInterval = startTypingIndicator(message.channel.id);
     try {
       const roomMessage = roomPipeline.processDiscordMessage(message);
-    if (!roomMessage) return isProcessing = false;
-
+      if (!roomMessage) return isProcessing = false;
       roomPipeline.saveToFile();
       activeDiscordClient.removeMessageFromQueue(message);
-
-    if (message.content.startsWith('-')) return isProcessing = false;
+      if (message.content.startsWith('-')) return isProcessing = false;
       await handleMessageProcessing(roomPipeline, roomMessage, message);
     } finally {
-      clearInterval(typingInterval); // Stop the typing indicator
+      clearInterval(typingInterval);
     }
   } catch (error) {
     console.error('Error during message processing:', error);
@@ -64,7 +59,6 @@ export async function processMessage() {
     }
   }
 }
-
 
 async function handleMessageProcessing(room: RoomPipeline, message: RoomMessage, discordMessage: Message) {
   const characters: CharacterInterface[] = [];
